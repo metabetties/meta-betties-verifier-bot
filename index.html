@@ -1,54 +1,33 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Meta Betties Verifier</title>
+    <title>Connect Wallet</title>
   </head>
   <body>
     <h1>Connect Wallet to Verify</h1>
     <button id="connect-btn">Connect Wallet</button>
     <p id="status"></p>
 
-    <!-- Phantom wallet adapter -->
-    <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-wallets@0.19.8/lib/phantom/phantomWalletAdapter.umd.min.js"></script>
-
     <script>
       const connectBtn = document.getElementById('connect-btn');
       const statusDiv = document.getElementById('status');
-      let wallet = null;
+      let wallet;
 
-      async function connectWallet() {
-        if (window.solana && window.solana.isPhantom) {
-          try {
-            const resp = await window.solana.connect();
-            wallet = resp.publicKey.toString();
-            statusDiv.innerText = "✅ Wallet connected: " + wallet;
-
-            // Send to backend for verification
-            const url = "https://meta-betties-verifier-bot.up.railway.app/verify"; // or your actual deployed endpoint
-            const tgId = new URLSearchParams(window.location.search).get('tg');
-
-            const response = await fetch(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                wallet: wallet,
-                telegram_id: tgId
-              }),
-            });
-
-            const data = await response.json();
-            if (data.message) statusDiv.innerText += "\n" + data.message;
-
-          } catch (err) {
-            console.error(err);
-            statusDiv.innerText = "❌ Connection failed.";
-          }
-        } else {
-          alert("Phantom Wallet not found! Please install Phantom.");
+      connectBtn.onclick = async () => {
+        if (!window.solana || !window.solana.isPhantom) {
+          statusDiv.innerText = "Phantom Wallet not found.";
+          return;
         }
-      }
 
-      connectBtn.addEventListener("click", connectWallet);
+        try {
+          const resp = await window.solana.connect();
+          wallet = resp.publicKey.toString();
+          statusDiv.innerText = `✅ Connected: ${wallet}`;
+        } catch (err) {
+          console.error(err);
+          statusDiv.innerText = "❌ Wallet connection failed.";
+        }
+      };
     </script>
   </body>
 </html>
