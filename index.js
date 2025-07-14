@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 // Respond to /start
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
-  const verifyLink = `https://verify.metabetties.xyz/?tg=${chatId}`;
+  const verificationUrl = `https://metabetties.github.io/meta-betties-verifier-bot/?tg=${chatId}`;
   bot.sendMessage(chatId, `Welcome to Meta Betties. Click the link below to verify NFT ownership:\n\n${verifyLink}`);
 });
 
