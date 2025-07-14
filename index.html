@@ -1,45 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Meta Betties Verifier</title>
-  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
-  <script src="https://unpkg.com/@solana/wallet-adapter-wallets"></script>
-</head>
-<body>
-  <h1>Connect Wallet to Verify</h1>
-  <button id="connect-btn">Connect Wallet</button>
-  <div id="status"></div>
-  <script>
-    const connectBtn = document.getElementById('connect-btn');
-    const statusDiv = document.getElementById('status');
-    let wallet;
-
-    connectBtn.onclick = async () => {
-      if (!window.solana || !window.solana.isPhantom) {
-        alert("Please install the Phantom Wallet extension");
-        return;
-      }
-
-      try {
-        const resp = await window.solana.connect();
-        const walletAddress = resp.publicKey.toString();
-        statusDiv.innerText = "Wallet connected: " + walletAddress;
-
-        // Call backend to verify ownership
-        const res = await fetch(`https://YOUR-RAILWAY-URL/verify/${walletAddress}`);
-        const data = await res.json();
-
-        if (data.verified) {
-          statusDiv.innerHTML = `<strong>✅ Verified!</strong> <br><a href="https://t.me/YOUR_TELEGRAM_GROUP" target="_blank">Join Telegram</a>`;
-        } else {
-          statusDiv.innerText = "❌ You do not hold a required NFT.";
+<html>
+  <head>
+    <title>Verify NFT Ownership</title>
+    <script>
+      async function connectWallet() {
+        if (!window.solana || !window.solana.isPhantom) {
+          alert("Please install the Phantom Wallet.");
+          return;
         }
-      } catch (err) {
-        console.error(err);
-        statusDiv.innerText = "Wallet connection failed.";
+
+        try {
+          const resp = await window.solana.connect();
+          const walletAddress = resp.publicKey.toString();
+          document.getElementById("status").innerText = `Wallet connected: ${walletAddress}`;
+
+          // Call backend to verify
+          const tgId = new URLSearchParams(window.location.search).get("tg");
+          const response = await fetch("https://meta-betties-verifier-bot.up.railway.app/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              wallet: walletAddress,
+              telegram_id: tgId
+            })
+          });
+
+          const data = await response.json();
+          if (data.message === "Verification successful!") {
+            document.getElementById("status").innerText = "✅ Verified!";
+          } else {
+            document.getElementById("status").innerText = "❌ Not holding a Bettie.";
+          }
+        } catch (err) {
+          console.error(err);
+          document.getElementById("status").innerText = "❌ Wallet connection failed.";
+        }
       }
-    };
-  </script>
-</body>
+    </script>
+  </head>
+  <body>
+    <h1>Connect Wallet to Verify</h1>
+    <button onclick="connectWallet()">Connect Wallet</button>
+    <div id="status"></div>
+  </body>
 </html>
+
+
