@@ -1,54 +1,85 @@
 
-require("dotenv").config();
-const TelegramBot = require("node-telegram-bot-api");
-const express = require("express");
-const axios = require("axios");
+import TelegramBot from "node-telegram-bot-api";
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import fetch from "node-fetch";
 
-const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
+dotenv.config();
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = 8080;
 
-// Respond to /start
+app.use(cors());
+app.use(express.json());
+
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
+const COLLECTION_ID = "j7qeFNnpWTbaf5g9sMCxP2zfKrH5QFgE56SuYjQDQi1";
+const TELEGRAM_GROUP_LINK = "https://t.me/+yourgroupinvitelink"; // Replace with your actual group link
+
+const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
+const userWalletMap = new Map();
+
+// Handle Telegram /start command
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   const verificationUrl = `https://metabetties.github.io/meta-betties-verifier-bot/?tg=${chatId}`;
-  bot.sendMessage(chatId, `Click to verify your NFT ownership:\n${verificationUrl}`);
+  bot.sendMessage(chatId, `🦋 Connect your wallet to verify: ${verificationUrl}`);
 });
 
-// Handle verification GET request from frontend
-app.get("/verify", async (req, res) => {
-  const { wallet, tg } = req.query;
+// API route to receive wallet address from frontend
+app.post("/api/verify", async (req, res) => {
+  const { wallet, tg } = req.body;
 
   if (!wallet || !tg) {
-    return res.status(400).send("Missing wallet or Telegram ID.");
+    return res.status(400).json({ error: "Missing wallet or Telegram ID" });
   }
 
   try {
-    const url = `https://api.helius.xyz/v0/addresses/${wallet}/assets?api-key=${process.env.HELIUS_API_KEY}`;
-    const response = await axios.get(url);
-    const assets = response.data;
+    const heliusUrl = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+    const response = await fetch(heliusUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getAssetsByOwner",
+        params: {
+          ownerAddress: wallet,
+          page: 1,
+          limit: 1000,
+          displayOptions: {
+            showCollectionMetadata: true
+          }
+        },
+      }),
+    });
 
-    const isHolder = assets.some((nft) =>
-      nft.grouping?.some((group) =>
-        group.group_value === process.env.COLLECTION_ID
+    const data = await response.json();
+    const assets = data.result?.items || [];
+
+    const ownsCollectible = assets.some(
+      (asset) => asset?.grouping?.some(
+        (group) => group.group_key === "collection" && group.group_value === COLLECTION_ID
       )
     );
 
-    if (isHolder) {
-      await bot.sendMessage(process.env.CHANNEL_ID, `✅ Verified Meta Betties holder: ${wallet}`);
-      await bot.sendMessage(tg, `✅ Success! You hold a Meta Betties NFT.`);
-      return res.send("✅ Verification successful!");
+    if (ownsCollectible) {
+      bot.sendMessage(tg, `✅ Verification successful! Join the group: ${TELEGRAM_GROUP_LINK}`);
+      return res.status(200).json({ verified: true });
     } else {
-      await bot.sendMessage(tg, `❌ No Meta Betties NFTs found in your wallet.`);
-      return res.status(403).send("Not a valid holder.");
+      bot.sendMessage(tg, `❌ Verification failed. No Meta Betties NFTs found in your wallet.`);
+      return res.status(403).json({ verified: false });
     }
-  } catch (err) {
-    console.error("Verification error:", err.message);
-    await bot.sendMessage(tg, `⚠️ Verification failed. Please try again later.`);
-    return res.status(500).send("Internal server error.");
+
+  } catch (error) {
+    console.error("Verification error:", error);
+    bot.sendMessage(tg, `⚠️ An error occurred during verification. Please try again.`);
+    return res.status(500).json({ error: "Verification failed" });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Verifier backend is running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`✅ Verifier backend is running on port ${port}`);
 });
