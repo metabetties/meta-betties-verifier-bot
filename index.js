@@ -9,10 +9,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Respond to /start
-bot.onText(/\/start/, async (msg) => {
+bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   const verificationUrl = `https://metabetties.github.io/meta-betties-verifier-bot/?tg=${chatId}`;
-  bot.sendMessage(chatId, `Welcome to Meta Betties. Click the link below to verify NFT ownership:\n\n${verifyLink}`);
+  bot.sendMessage(chatId, `Click to verify your NFT ownership: ${verificationUrl}`);
 });
 
 // Endpoint to receive wallet from frontend
