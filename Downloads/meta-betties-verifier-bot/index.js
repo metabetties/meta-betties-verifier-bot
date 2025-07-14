@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const bot = new Telegraf(process.env.8165067940:AAGnUuHh119Gzfu1Kb0M06EcZbbXIdKfJOY);
+const bot = new Telegraf(process.env.BOT_TOKEN);
 const PORT = process.env.PORT || 8080;
 
 const COLLECTION_ID = "j7qeFNnpWTbaf5g9sMCxP2zfKrH5QFgE56SuYjQDQi1";
@@ -29,7 +29,8 @@ app.post("/verify", async (req, res) => {
 
   try {
     const response = await axios.post(
-      `https://mainnet.helius-rpc.com/?api-key=${process.env.1c7c1b69-cff1-478c-9e48-60d4385ca187}`,
+      `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY
+}`,
       {
         jsonrpc: "2.0",
         id: 1,
