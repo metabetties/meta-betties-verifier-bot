@@ -1,0 +1,1 @@
+# Meta Betties Telegram NFT Verifier Bot
