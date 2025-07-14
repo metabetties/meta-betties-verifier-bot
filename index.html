@@ -1,62 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Connect Wallet to Verify</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 20px;
+      color: red;
+    }
+  </style>
 </head>
 <body>
   <h1>Connect Wallet to Verify</h1>
-  <button id="connectWallet">Connect Wallet</button>
-  <p id="walletStatus"></p>
+  <button id="connect-button">Connect Wallet</button>
+  <div id="status"></div>
 
-  <script type="module">
-    import {
-      Connection,
-      clusterApiUrl,
-      PublicKey
-    } from "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/+esm";
+  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const connectButton = document.getElementById('connect-button');
+      const statusDiv = document.getElementById('status');
 
-    async function connectWallet() {
-      const statusEl = document.getElementById("walletStatus");
-
-      try {
-        if (!window.solana || !window.solana.isPhantom) {
-          statusEl.innerHTML = "❌ Phantom wallet not found.";
-          return;
-        }
-
-        const resp = await window.solana.connect();
-        const walletAddress = resp.publicKey.toString();
-        statusEl.innerHTML = `✅ Connected: ${walletAddress}`;
-
-        // Extract Telegram ID from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const telegramId = urlParams.get('tg');
-
-        // Send to backend for verification
-        const verifyUrl = "https://meta-betties-verifier-bot-production.up.railway.app/verify";
-        const result = await fetch(verifyUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            walletAddress,
-            telegramId
-          }),
-        });
-
-        const json = await result.json();
-
-        if (json.success) {
-          statusEl.innerHTML += "<br/>🎉 Verification successful!";
+      connectButton.addEventListener('click', async () => {
+        if (window.solana && window.solana.isPhantom) {
+          try {
+            const response = await window.solana.connect();
+            const publicKey = response.publicKey.toString();
+            statusDiv.innerHTML = '✅ Wallet connected: ' + publicKey;
+            statusDiv.style.color = 'green';
+          } catch (err) {
+            statusDiv.innerHTML = '❌ Wallet connection failed.';
+            statusDiv.style.color = 'red';
+          }
         } else {
-          statusEl.innerHTML += "<br/>❌ Verification failed.";
+          statusDiv.innerHTML = '❌ Phantom Wallet not found. Please install it.';
+          statusDiv.style.color = 'red';
         }
-
-      } catch (err) {
-        statusEl.innerHTML = `❌ Wallet connection failed.<br/>${err.message}`;
-      }
-    }
-
-    document.getElementById("connectWallet").addEventListener("click", connectWallet);
+      });
+    });
   </script>
 </body>
 </html>
