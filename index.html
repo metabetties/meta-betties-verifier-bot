@@ -1,59 +1,63 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Meta Betties Verification</title>
-  </head>
-  <body>
-    <h1>Connect Wallet to Verify</h1>
-    <button id="connect-btn">Connect Wallet</button>
-    <div id="status"></div>
+<head>
+  <title>Connect Wallet to Verify</title>
+</head>
+<body>
+  <h1>Connect Wallet to Verify</h1>
+  <button id="connectWallet">Connect Wallet</button>
+  <p id="walletStatus"></p>
 
-    <script>
-      const connectBtn = document.getElementById("connect-btn");
-      const statusDiv = document.getElementById("status");
+  <script type="module">
+    import {
+      Connection,
+      clusterApiUrl,
+      PublicKey
+    } from "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/+esm";
 
-      connectBtn.onclick = async () => {
+    async function connectWallet() {
+      const statusEl = document.getElementById("walletStatus");
+
+      try {
         if (!window.solana || !window.solana.isPhantom) {
-          alert("Please install the Phantom wallet extension.");
+          statusEl.innerHTML = "❌ Phantom wallet not found.";
           return;
         }
 
-        try {
-          const resp = await window.solana.connect();
-          const wallet = resp.publicKey.toString();
-          statusDiv.innerText = `✅ Connected: ${wallet}`;
+        const resp = await window.solana.connect();
+        const walletAddress = resp.publicKey.toString();
+        statusEl.innerHTML = `✅ Connected: ${walletAddress}`;
 
-          // Extract Telegram ID from query param
-          const params = new URLSearchParams(window.location.search);
-          const telegramId = params.get("tg");
+        // Extract Telegram ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const telegramId = urlParams.get('tg');
 
-          // Call backend verification API
-          const response = await fetch("https://meta-betties-verifier-bot-production.up.railway.app/verify", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              wallet: wallet,
-              telegram_id: telegramId
-            })
-          });
+        // Send to backend for verification
+        const verifyUrl = "https://meta-betties-verifier-bot-production.up.railway.app/verify";
+        const result = await fetch(verifyUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            walletAddress,
+            telegramId
+          }),
+        });
 
-          const data = await response.json();
+        const json = await result.json();
 
-          if (response.ok) {
-            statusDiv.innerText += "\n🎉 Verified holder! Check Telegram for access.";
-          } else {
-            statusDiv.innerText += "\n❌ Not verified: " + data.message;
-          }
-
-        } catch (err) {
-          console.error(err);
-          statusDiv.innerText = "❌ Wallet connection failed.";
+        if (json.success) {
+          statusEl.innerHTML += "<br/>🎉 Verification successful!";
+        } else {
+          statusEl.innerHTML += "<br/>❌ Verification failed.";
         }
-      };
-    </script>
-  </body>
-</html>
 
+      } catch (err) {
+        statusEl.innerHTML = `❌ Wallet connection failed.<br/>${err.message}`;
+      }
+    }
+
+    document.getElementById("connectWallet").addEventListener("click", connectWallet);
+  </script>
+</body>
+</html>
 
