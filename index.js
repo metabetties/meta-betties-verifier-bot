@@ -1,8 +1,9 @@
 
-import express from 'express';
-import fetch from 'node-fetch';
-import TelegramBot from 'node-telegram-bot-api';
-import dotenv from 'dotenv';
+const express = require('express');
+const cors = require('cors');
+const fetch = require('node-fetch');
+const bodyParser = require('body-parser');
+require('dotenv').config();
 
 dotenv.config();
 
