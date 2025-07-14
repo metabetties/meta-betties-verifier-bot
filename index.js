@@ -12,10 +12,10 @@ const PORT = process.env.PORT || 3000;
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   const verificationUrl = `https://metabetties.github.io/meta-betties-verifier-bot/?tg=${chatId}`;
-  bot.sendMessage(chatId, `Click to verify your NFT ownership: ${verificationUrl}`);
+  bot.sendMessage(chatId, `Click to verify your NFT ownership:\n${verificationUrl}`);
 });
 
-// Endpoint to receive wallet from frontend
+// Handle verification GET request from frontend
 app.get("/verify", async (req, res) => {
   const { wallet, tg } = req.query;
 
@@ -24,12 +24,10 @@ app.get("/verify", async (req, res) => {
   }
 
   try {
-    // Query Helius for NFTs held by wallet
-    const url = `https://api.helius.xyz/v0/addresses/${wallet}/nft-assets?api-key=${process.env.HELIUS_API_KEY}`;
+    const url = `https://api.helius.xyz/v0/addresses/${wallet}/assets?api-key=${process.env.HELIUS_API_KEY}`;
     const response = await axios.get(url);
     const assets = response.data;
 
-    // Check if user owns any NFT from your collection
     const isHolder = assets.some((nft) =>
       nft.grouping?.some((group) =>
         group.group_value === process.env.COLLECTION_ID
@@ -38,16 +36,16 @@ app.get("/verify", async (req, res) => {
 
     if (isHolder) {
       await bot.sendMessage(process.env.CHANNEL_ID, `✅ Verified Meta Betties holder: ${wallet}`);
-      await bot.sendMessage(tg, `✅ Verification successful! You hold a Meta Betties NFT.`);
-      return res.send("Holder verified. Telegram access granted.");
+      await bot.sendMessage(tg, `✅ Success! You hold a Meta Betties NFT.`);
+      return res.send("✅ Verification successful!");
     } else {
-      await bot.sendMessage(tg, `❌ Verification failed. No Meta Betties NFT found in this wallet.`);
-      return res.send("Not a valid holder.");
+      await bot.sendMessage(tg, `❌ No Meta Betties NFTs found in your wallet.`);
+      return res.status(403).send("Not a valid holder.");
     }
   } catch (err) {
-    console.error("Error during verification:", err.message);
-    await bot.sendMessage(tg, `⚠️ Verification error. Please try again.`);
-    return res.status(500).send("Server error during verification.");
+    console.error("Verification error:", err.message);
+    await bot.sendMessage(tg, `⚠️ Verification failed. Please try again later.`);
+    return res.status(500).send("Internal server error.");
   }
 });
 
