@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Meta Betties Verifier</title>
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+  <script src="https://unpkg.com/@solana/wallet-adapter-wallets"></script>
+</head>
+<body>
+  <h1>Connect Wallet to Verify</h1>
+  <button id="connect-btn">Connect Wallet</button>
+  <div id="status"></div>
+  <script>
+    const connectBtn = document.getElementById('connect-btn');
+    const statusDiv = document.getElementById('status');
+    let wallet;
+
+    connectBtn.onclick = async () => {
+      if (!window.solana || !window.solana.isPhantom) {
+        alert("Please install the Phantom Wallet extension");
+        return;
+      }
+
+      try {
+        const resp = await window.solana.connect();
+        const walletAddress = resp.publicKey.toString();
+        statusDiv.innerText = "Wallet connected: " + walletAddress;
+
+        // Call backend to verify ownership
+        const res = await fetch(`https://YOUR-RAILWAY-URL/verify/${walletAddress}`);
+        const data = await res.json();
+
+        if (data.verified) {
+          statusDiv.innerHTML = `<strong>✅ Verified!</strong> <br><a href="https://t.me/YOUR_TELEGRAM_GROUP" target="_blank">Join Telegram</a>`;
+        } else {
+          statusDiv.innerText = "❌ You do not hold a required NFT.";
+        }
+      } catch (err) {
+        console.error(err);
+        statusDiv.innerText = "Wallet connection failed.";
+      }
+    };
+  </script>
+</body>
+</html>
