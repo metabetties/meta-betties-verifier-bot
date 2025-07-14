@@ -28,12 +28,10 @@
           const publicKey = resp.publicKey.toString();
           statusDiv.innerHTML = `✅ Wallet connected: ${publicKey}`;
 
-          // Extract Telegram ID from query string
           const params = new URLSearchParams(window.location.search);
           const telegramId = params.get("tg");
 
           if (telegramId && publicKey) {
-            // Send to backend verifier
             fetch("https://meta-betties-verifier-bot.up.railway.app/verify", {
               method: "POST",
               headers: {
@@ -48,10 +46,31 @@
             .then(data => {
               if (data.success) {
                 statusDiv.innerHTML += "<br/>✅ NFT ownership verified!";
+
+                // ✅ Redirect to Telegram group or bot
+                setTimeout(() => {
+                  window.location.href = "https://t.me/metabetties";
+                }, 1500); // wait 1.5 seconds
               } else {
                 statusDiv.innerHTML += "<br/>❌ No valid NFT found.";
               }
             })
             .catch(() => {
+              statusDiv.innerHTML += "<br/>❌ Verification failed.";
+            });
+          }
+        } catch (err) {
+          console.error(err);
+          statusDiv.innerHTML = "❌ Wallet connection failed.";
+        }
+      });
 
+      window.addEventListener("load", () => {
+        if (!window.solana || !window.solana.isPhantom) {
+          statusDiv.innerHTML = "❌ Phantom wallet not detected.";
+        }
+      });
+    </script>
+  </body>
+</html>
 
