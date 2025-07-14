@@ -1,48 +1,55 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Verify NFT Ownership</title>
-    <script>
-      async function connectWallet() {
-        if (!window.solana || !window.solana.isPhantom) {
-          alert("Please install the Phantom Wallet.");
-          return;
-        }
-
-        try {
-          const resp = await window.solana.connect();
-          const walletAddress = resp.publicKey.toString();
-          document.getElementById("status").innerText = `Wallet connected: ${walletAddress}`;
-
-          // Call backend to verify
-          const tgId = new URLSearchParams(window.location.search).get("tg");
-          const response = await fetch("https://meta-betties-verifier-bot.up.railway.app/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              wallet: walletAddress,
-              telegram_id: tgId
-            })
-          });
-
-          const data = await response.json();
-          if (data.message === "Verification successful!") {
-            document.getElementById("status").innerText = "✅ Verified!";
-          } else {
-            document.getElementById("status").innerText = "❌ Not holding a Bettie.";
-          }
-        } catch (err) {
-          console.error(err);
-          document.getElementById("status").innerText = "❌ Wallet connection failed.";
-        }
-      }
-    </script>
+    <title>Meta Betties Verifier</title>
   </head>
   <body>
     <h1>Connect Wallet to Verify</h1>
-    <button onclick="connectWallet()">Connect Wallet</button>
-    <div id="status"></div>
+    <button id="connect-btn">Connect Wallet</button>
+    <p id="status"></p>
+
+    <!-- Phantom wallet adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-wallets@0.19.8/lib/phantom/phantomWalletAdapter.umd.min.js"></script>
+
+    <script>
+      const connectBtn = document.getElementById('connect-btn');
+      const statusDiv = document.getElementById('status');
+      let wallet = null;
+
+      async function connectWallet() {
+        if (window.solana && window.solana.isPhantom) {
+          try {
+            const resp = await window.solana.connect();
+            wallet = resp.publicKey.toString();
+            statusDiv.innerText = "✅ Wallet connected: " + wallet;
+
+            // Send to backend for verification
+            const url = "https://meta-betties-verifier-bot.up.railway.app/verify"; // or your actual deployed endpoint
+            const tgId = new URLSearchParams(window.location.search).get('tg');
+
+            const response = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                wallet: wallet,
+                telegram_id: tgId
+              }),
+            });
+
+            const data = await response.json();
+            if (data.message) statusDiv.innerText += "\n" + data.message;
+
+          } catch (err) {
+            console.error(err);
+            statusDiv.innerText = "❌ Connection failed.";
+          }
+        } else {
+          alert("Phantom Wallet not found! Please install Phantom.");
+        }
+      }
+
+      connectBtn.addEventListener("click", connectWallet);
+    </script>
   </body>
 </html>
-
 
