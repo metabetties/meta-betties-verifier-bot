@@ -1,54 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Connect Wallet to Verify</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
-    }
-    button {
-      padding: 8px 16px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    #status {
-      margin-top: 20px;
-      color: red;
-    }
-  </style>
-</head>
-<body>
-  <h1>Connect Wallet to Verify</h1>
-  <button id="connect-button">Connect Wallet</button>
-  <div id="status"></div>
+<html>
+  <head>
+    <title>Connect Wallet to Verify</title>
+    <script type="module">
+      import {
+        PhantomWalletAdapter
+      } from "https://cdn.skypack.dev/@solana/wallet-adapter-wallets";
+      import {
+        ConnectionProvider,
+        WalletProvider
+      } from "https://cdn.skypack.dev/@solana/wallet-adapter-react";
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.88.2/lib/index.iife.min.js"></script>
+  </head>
+  <body>
+    <h1>Connect Wallet to Verify</h1>
+    <button id="connectButton">Connect Wallet</button>
+    <div id="status"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const connectButton = document.getElementById('connect-button');
-      const statusDiv = document.getElementById('status');
+    <script>
+      const connectButton = document.getElementById("connectButton");
+      const statusDiv = document.getElementById("status");
 
-      connectButton.addEventListener('click', async () => {
-        if (window.solana && window.solana.isPhantom) {
-          try {
-            const response = await window.solana.connect();
-            const publicKey = response.publicKey.toString();
-            statusDiv.innerHTML = '✅ Wallet connected: ' + publicKey;
-            statusDiv.style.color = 'green';
-          } catch (err) {
-            statusDiv.innerHTML = '❌ Wallet connection failed.';
-            statusDiv.style.color = 'red';
-          }
-        } else {
-          statusDiv.innerHTML = '❌ Phantom Wallet not found. Please install it.';
-          statusDiv.style.color = 'red';
-        }
-      });
-    });
-  </script>
-</body>
-</html>
+      connectButton.addEventListener("click", async () => {
+        try {
+          const resp = await window.solana.connect();
+          const publicKey = resp.publicKey.toString();
+          statusDiv.innerHTML = `✅ Wallet connected: ${publicKey}`;
+
+          // Extract Telegram ID from query string
+          const params = new URLSearchParams(window.location.search);
+          const telegramId = params.get("tg");
+
+          if (telegramId && publicKey) {
+            // Send to backend verifier
+            fetch("https://meta-betties-verifier-bot.up.railway.app/verify", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                wallet: publicKey,
+                tg: telegramId
+              })
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                statusDiv.innerHTML += "<br/>✅ NFT ownership verified!";
+              } else {
+                statusDiv.innerHTML += "<br/>❌ No valid NFT found.";
+              }
+            })
+            .catch(() => {
+
 
