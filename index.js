@@ -1,9 +1,8 @@
-
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const fetch = require("node-fetch");
-const { Telegraf } = require("telegraf"); // ✅ CORRECT LIBRARY
+const { Telegraf } = require("telegraf");
 const dotenv = require("dotenv");
 
 dotenv.config();
@@ -11,11 +10,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-const BOT_TOKEN = process.env.BOT_TOKEN; // ✅ Match your .env
+const BOT_TOKEN = process.env.BOT_TOKEN;
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 const COLLECTION_ID = "j7qeFNnpWTbaf5g9sMCxP2zfKrH5QFgE56SuYiQD0i1";
 
-const bot = new Telegraf(BOT_TOKEN); // ✅ Correct usage of Telegraf
+const bot = new Telegraf(BOT_TOKEN);
 
 const pendingVerifications = new Map();
 
@@ -43,12 +42,7 @@ app.post("/verify", async (req, res) => {
 
     if (verified) {
       bot.telegram.sendMessage(tg, "✅ Wallet verification successful!");
-
-      // ✅ Custom group username added for frontend redirect
-      return res.send({
-        success: true,
-        groupUsername: "MetaBettiesVIP"
-      });
+      return res.send({ success: true, groupUsername: "MetaBettiesVIP" });
     } else {
       return res.status(403).send({ success: false, message: "No valid NFT found." });
     }
@@ -58,5 +52,12 @@ app.post("/verify", async (req, res) => {
   }
 });
 
-bot.launch();
+// ❌ REMOVE bot.launch()
+// ✅ USE webhook mode instead
+const webhookPath = `/bot${BOT_TOKEN}`;
+bot.telegram.setWebhook(`https://verify.metabetties.com${webhookPath}`);
+app.use(webhookPath, bot.webhookCallback(webhookPath));
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
