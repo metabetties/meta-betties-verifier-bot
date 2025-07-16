@@ -3,9 +3,6 @@ const express = require("express");
 const cors = require("cors");
 const fetch = require("node-fetch");
 const { Telegraf } = require("telegraf");
-const dotenv = require("dotenv");
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -52,13 +49,13 @@ app.post("/verify", async (req, res) => {
   }
 });
 
-// ❌ REMOVE bot.launch()
-// ✅ USE webhook mode instead
+// ✅ Webhook mode
 const webhookPath = `/bot${BOT_TOKEN}`;
 app.use(bot.webhookCallback(webhookPath));
 
 app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Webhook path: ${webhookPath}`);
   try {
     await bot.telegram.setWebhook(`https://verify.metabetties.com${webhookPath}`);
     console.log("Webhook set successfully.");
@@ -66,5 +63,3 @@ app.listen(PORT, async () => {
     console.error("Failed to set webhook:", err);
   }
 });
-
-
