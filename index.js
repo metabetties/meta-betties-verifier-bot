@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 8080;
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
-const COLLECTION_ID = "j7qeFNnpWTbaf5g9sMCxP2zfKrH5QFgE56SuYiQD0i1";
+const VERIFIED_CREATOR = "EFwPVHhY6vH64MsMDx9ub8Edn4ktYYBcgqNYki1R3rmE";
 
 const bot = new Telegraf(BOT_TOKEN);
 
@@ -42,7 +42,11 @@ app.post("/verify", async (req, res) => {
   try {
     const response = await fetch(`https://api.helius.xyz/v0/addresses/${wallet}/nft-events?api-key=${HELIUS_API_KEY}`);
     const data = await response.json();
-    const verified = data.some(nft => nft?.nft?.collection?.id === COLLECTION_ID);
+    const verified = data.some(nft =>
+  nft?.nft?.creators?.some(creator =>
+    creator.address === VERIFIED_CREATOR && creator.verified === true
+  )
+);
 
     if (verified) {
       bot.telegram.sendMessage(tg, "✅ Wallet verification successful!");
