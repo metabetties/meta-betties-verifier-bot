@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const fetch = require("node-fetch");
+const path = require("path");
 const { Telegraf } = require("telegraf");
 
 const app = express();
@@ -13,21 +14,27 @@ const COLLECTION_ID = "j7qeFNnpWTbaf5g9sMCxP2zfKrH5QFgE56SuYiQD0i1";
 
 const bot = new Telegraf(BOT_TOKEN);
 
+// Store pending verifications in memory
 const pendingVerifications = new Map();
 
+// Serve static files from /public
+app.use(express.static(path.join(__dirname, "public")));
+app.use(cors());
+app.use(express.json());
+
+// Serve index.html for root
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Telegram /start command handler
 bot.start((ctx) => {
   const userId = ctx.from.id;
   const url = `https://verify.metabetties.com/?tg=${userId}`;
   ctx.reply(`Please verify your wallet by visiting: ${url}`);
 });
 
-app.use(cors());
-app.use(express.json());
-
-app.get("/", (req, res) => {
-  res.send("Meta Betties Verifier Bot is running.");
-});
-
+// Wallet verification endpoint
 app.post("/verify", async (req, res) => {
   const { wallet, tg } = req.body;
   if (!wallet || !tg) return res.status(400).send("Missing wallet or tg param");
@@ -49,13 +56,13 @@ app.post("/verify", async (req, res) => {
   }
 });
 
-// ✅ Webhook mode
+// Webhook setup
 const webhookPath = `/bot${BOT_TOKEN}`;
 app.use(bot.webhookCallback(webhookPath));
 
+// Start server
 app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Webhook path: ${webhookPath}`);
   try {
     await bot.telegram.setWebhook(`https://verify.metabetties.com${webhookPath}`);
     console.log("Webhook set successfully.");
