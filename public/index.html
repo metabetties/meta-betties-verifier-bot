@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Meta Betties Wallet Verifier</title>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-wallets@0.9.13/lib/index.umd.min.js"></script>
 </head>
 <body>
   <h1>Connect Wallet to Verify</h1>
@@ -12,43 +11,42 @@
   <p id="status"></p>
 
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      const { PhantomWalletAdapter } = window["@solana/wallet-adapter-wallets"];
-      const adapter = new PhantomWalletAdapter();
+    document.addEventListener("DOMContentLoaded", () => {
+      const connectButton = document.getElementById("connect-button");
+      const status = document.getElementById("status");
 
-      document.getElementById('connect-button').onclick = async () => {
+      connectButton.addEventListener("click", async () => {
         try {
-          // ✅ Check for Phantom
           if (!window.solana || !window.solana.isPhantom) {
-            alert("Phantom wallet not found. Please install Phantom to continue.");
+            alert("Phantom Wallet not found. Please install it to continue.");
             return;
           }
 
-          if (!adapter.connected) await adapter.connect();
-          const walletAddress = adapter.publicKey.toBase58();
-          document.getElementById('status').innerText = `✅ Wallet connected: ${walletAddress}`;
+          const resp = await window.solana.connect();
+          const walletAddress = resp.publicKey.toString();
+          status.innerText = `✅ Wallet connected: ${walletAddress}`;
 
           const params = new URLSearchParams(window.location.search);
           const tgId = params.get("tg");
 
           const response = await fetch("/verify", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ wallet: walletAddress, tg: tgId })
           });
 
           const data = await response.json();
           if (data.success) {
-            document.getElementById('status').innerText += "\n✅ Verification successful!";
-            window.location.href = `https://t.me/${data.groupUsername || 'MetaBettiesVIP'}`;
+            status.innerText += "\n✅ Verification successful!";
+            window.location.href = `https://t.me/${data.groupUsername || "MetaBettiesVIP"}`;
           } else {
-            document.getElementById('status').innerText += "\n❌ Verification failed: " + (data.message || '');
+            status.innerText += "\n❌ Verification failed: " + (data.message || "");
           }
         } catch (err) {
           console.error(err);
-          document.getElementById('status').innerText = "❌ Error during verification.";
+          status.innerText = "❌ Error during verification.";
         }
-      };
+      });
     });
   </script>
 </body>
