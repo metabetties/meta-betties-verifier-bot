@@ -31,10 +31,10 @@
           const params = new URLSearchParams(window.location.search);
           const tgId = params.get("tg");
 
-          const response = await fetch('https://verify.metabetties.com/verify', {
+          const response = await fetch('/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ walletAddress, tgId })
+            body: JSON.stringify({ wallet: walletAddress, tg: tgId })
           });
 
           const data = await response.json();
@@ -53,4 +53,3 @@
   </script>
 </body>
 </html>
-
