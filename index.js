@@ -55,9 +55,16 @@ app.post("/verify", async (req, res) => {
 // ❌ REMOVE bot.launch()
 // ✅ USE webhook mode instead
 const webhookPath = `/bot${BOT_TOKEN}`;
-bot.telegram.setWebhook(`https://verify.metabetties.com${webhookPath}`);
-app.use(webhookPath, bot.webhookCallback(webhookPath));
+app.use(bot.webhookCallback(webhookPath));
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, async () => {
+  console.log(`Server running on port ${PORT}`);
+  try {
+    await bot.telegram.setWebhook(`https://verify.metabetties.com${webhookPath}`);
+    console.log("Webhook set successfully.");
+  } catch (err) {
+    console.error("Failed to set webhook:", err);
+  }
+});
 
 
