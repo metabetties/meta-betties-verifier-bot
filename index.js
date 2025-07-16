@@ -17,7 +17,7 @@ const pendingVerifications = new Map();
 
 bot.start((ctx) => {
   const userId = ctx.from.id;
-  const url = `https://metabetties.github.io/meta-betties-verifier-bot/?tg=${userId}`;
+  const url = `https://verify.metabetties.com/?tg=${userId}`;
   ctx.reply(`Please verify your wallet by visiting: ${url}`);
 });
 
