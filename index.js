@@ -39,15 +39,29 @@ app.post("/verify", async (req, res) => {
   if (!wallet || !tg) return res.status(400).send("Missing wallet or Telegram ID.");
 
   try {
-    const url = `https://api.helius.xyz/v0/addresses/${wallet}/nft-assets?api-key=${HELIUS_API_KEY}`;
-    const response = await fetch(url);
-    const nfts = await response.json();
+    const response = await fetch(`https://rpc.helius.xyz/?api-key=${HELIUS_API_KEY}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "get-assets",
+        method: "getAssetsByOwner",
+        params: {
+          ownerAddress: wallet,
+          page: 1,
+          limit: 1000
+        }
+      })
+    });
 
-    const verified = Array.isArray(nfts) && nfts.some((nft) =>
-  nft.content?.metadata?.creators?.some((creator) =>
-    creator.address === VERIFIED_CREATOR && creator.verified === true
-  )
-);
+    const result = await response.json();
+    const assets = result.result?.items || [];
+
+    const verified = assets.some((nft) =>
+      nft.creators?.some((creator) =>
+        creator.address === VERIFIED_CREATOR && creator.verified
+      )
+    );
 
     if (verified) {
       await bot.telegram.sendMessage(tg, "✅ Wallet verification successful!");
@@ -55,6 +69,7 @@ app.post("/verify", async (req, res) => {
     } else {
       return res.status(403).send({ success: false, message: "No valid NFT found." });
     }
+
   } catch (err) {
     console.error("Verification error:", err);
     return res.status(500).send({ success: false, message: "Server error during verification." });
