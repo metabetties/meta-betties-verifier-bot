@@ -44,7 +44,7 @@ const response = await fetch(url);
 const nfts = await response.json();
 
 const verified = Array.isArray(nfts) && nfts.some((nft) =>
-  nft.creators?.some((creator) =>
+  nft?.content?.metadata?.creators?.some((creator) =>
     creator.address === VERIFIED_CREATOR && creator.verified === true
   )
 );
