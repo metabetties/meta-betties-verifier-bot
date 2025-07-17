@@ -41,7 +41,7 @@ app.post("/verify", async (req, res) => {
   try {
     const url = `https://api.helius.xyz/v0/addresses/${wallet}/nft-assets?api-key=${HELIUS_API_KEY}`;
 const response = await fetch(url);
-const nfts = await response.json();
+const { result: nfts } = await response.json();  // ✅ CORRECTED
 
 const verified = Array.isArray(nfts) && nfts.some((nft) =>
   nft?.content?.metadata?.creators?.some((creator) =>
