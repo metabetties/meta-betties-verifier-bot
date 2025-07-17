@@ -47,6 +47,8 @@ app.post("/verify", async (req, res) => {
 );
 const assets = await response.json();
 
+console.log("Retrieved assets:", JSON.stringify(assets, null, 2));
+
 const verified = assets.some(asset =>
   asset?.content?.metadata?.creators?.some(c =>
     c.address === VERIFIED_CREATOR && c.verified
