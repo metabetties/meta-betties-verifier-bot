@@ -63,7 +63,7 @@ app.post("/verify", async (req, res) => {
 
     if (verified) {
       await bot.telegram.sendMessage(tg, "✅ Wallet verification successful!");
-      return res.send({ success: true, groupUsername: "MetaBettiesVIP" });
+      return res.send({ success: true, groupLink: "https://t.me/+sOUpiDSRE2lhNWQx" });
     } else {
       return res.status(403).send({ success: false, message: "No valid NFT found." });
     }

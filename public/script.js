@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (verifyResp.ok && data.success) {
         statusText.innerHTML = "✅ Wallet verified! Redirecting to Telegram…";
         setTimeout(() => {
-          window.location.href = `https://t.me/${data.groupUsername}`;
+          window.location.href = data.groupLink;
         }, 2000);
       } else {
         statusText.innerHTML = `❌ ${data.message || "Verification failed."}`;
