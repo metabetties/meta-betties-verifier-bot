@@ -39,26 +39,32 @@ app.post("/verify", async (req, res) => {
   const { wallet, tg } = req.body;
   if (!wallet || !tg) return res.status(400).send("Missing wallet or tg param");
 
- try {
-  const response = await fetch(`https://api.helius.xyz/v0/addresses/${wallet}/assets?api-key=${HELIUS_API_KEY}`);
-  const assets = await response.json();
+  try {
+    console.log("🔍 Verifying wallet:", wallet);
 
-  const verified = assets.some(asset =>
-    asset?.creators?.some(c =>
-      c.address === VERIFIED_CREATOR && c.verified
-    )
-  );
+    const response = await fetch(`https://api.helius.xyz/v0/addresses/${wallet}/assets?api-key=${HELIUS_API_KEY}`);
+    const assets = await response.json();
 
-  if (verified) {
-    bot.telegram.sendMessage(tg, "✅ Wallet verification successful!");
-    return res.send({ success: true, groupUsername: "MetaBettiesVIP" });
-  } else {
-    return res.status(403).send({ success: false, message: "No valid NFT found." });
+    console.log("🧾 Retrieved assets:", JSON.stringify(assets, null, 2)); // Add this line
+
+    const verified = assets.some(asset =>
+      asset?.creators?.some(c =>
+        c.address === VERIFIED_CREATOR && c.verified
+      )
+    );
+
+    console.log("✅ Verification result:", verified);
+
+    if (verified) {
+      bot.telegram.sendMessage(tg, "✅ Wallet verification successful!");
+      return res.send({ success: true, groupUsername: "MetaBettiesVIP" });
+    } else {
+      return res.status(403).send({ success: false, message: "No valid NFT found." });
+    }
+  } catch (err) {
+    console.error("🚨 Verification error:", err); // ← log the actual error
+    res.status(500).send("Server error");
   }
-} catch (err) {
-  console.error(err);
-  res.status(500).send("Server error");
-}
 });
 
 // Webhook setup
