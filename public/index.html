@@ -1,60 +1,55 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Meta Betties Wallet Verifier</title>
-</head>
-<body>
-  <h1>Connect Wallet to Verify</h1>
-  <button id="connect-button">Connect Wallet</button>
-  <p id="status"></p>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Wallet Verification</title>
+  </head>
+  <body>
+    <h1>Connect Wallet to Verify</h1>
+    <button id="connectButton">Connect Wallet</button>
+    <p id="status"></p>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const connectButton = document.getElementById("connect-button");
-      const status = document.getElementById("status");
+    <script src="https://unpkg.com/@solana/wallet-adapter-wallets"></script>
+    <script src="https://unpkg.com/@solana/wallet-adapter-base"></script>
+    <script src="https://unpkg.com/@solana/wallet-adapter-wallets/dist/wallets.umd.js"></script>
+    <script src="https://unpkg.com/@solana/wallet-adapter-react-ui/styles.css"></script>
+    <script type="module">
+      import {
+        Connection,
+        clusterApiUrl,
+        PublicKey
+      } from "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.73.3/+esm";
 
-      connectButton.addEventListener("click", async () => {
+      document.getElementById("connectButton").onclick = async () => {
         try {
-          if (!window.solana || !window.solana.isPhantom) {
-            alert("Phantom Wallet not found. Please install it to continue.");
+          const provider = window.phantom?.solana;
+          if (!provider || !provider.isPhantom) {
+            alert("Phantom wallet not found!");
             return;
           }
 
-          const response = await window.solana.connect();
-          const walletAddress = response.publicKey.toString();
-          status.textContent = `✅ Wallet connected: ${walletAddress}`;
+          const resp = await provider.connect();
+          const walletAddress = resp.publicKey.toString();
+          const tg = new URLSearchParams(window.location.search).get("tg");
 
-          const params = new URLSearchParams(window.location.search);
-          const tgId = params.get("tg");
-
-          if (!tgId) {
-            status.textContent = "❌ Missing Telegram ID.";
-            return;
-          }
-
-          const verifyRes = await fetch("/verify", {
+          const res = await fetch("/verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ wallet: walletAddress, tg: tgId }),
+            body: JSON.stringify({ wallet: walletAddress, tg }),
           });
 
-          const data = await verifyRes.json();
-
-          if (verifyRes.ok) {
-            status.textContent = "✅ Wallet verified!";
+          const statusText = document.getElementById("status");
+          if (res.ok) {
+            statusText.innerHTML = "✅ Wallet verified!";
           } else {
-            status.textContent = "❌ " + (data.message || "Verification failed.");
+            const error = await res.json();
+            statusText.innerHTML = "❌ " + (error.message || "Verification failed.");
           }
-
         } catch (err) {
-          console.error("Error during wallet verification:", err);
-          status.textContent = "❌ Error during verification.";
+          console.error("Wallet connection error:", err);
+          document.getElementById("status").innerHTML = "❌ Connection failed.";
         }
-      });
-    });
-  <script src="script.js"></script>
-</body>
+      };
+    </script>
+  </body>
 </html>
-
