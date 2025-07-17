@@ -44,10 +44,10 @@ app.post("/verify", async (req, res) => {
     const nfts = await response.json();
 
     const verified = Array.isArray(nfts) && nfts.some((nft) =>
-      nft.creators?.some((creator) =>
-        creator.address === VERIFIED_CREATOR && creator.verified === true
-      )
-    );
+  nft.content?.metadata?.creators?.some((creator) =>
+    creator.address === VERIFIED_CREATOR && creator.verified === true
+  )
+);
 
     if (verified) {
       await bot.telegram.sendMessage(tg, "✅ Wallet verification successful!");
