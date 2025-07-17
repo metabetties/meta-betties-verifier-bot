@@ -10,48 +10,51 @@
   <button id="connect-button">Connect Wallet</button>
   <p id="status"></p>
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const connectButton = document.getElementById("connect-button");
-    const status = document.getElementById("status");
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const connectButton = document.getElementById("connect-button");
+      const status = document.getElementById("status");
 
-    connectButton.addEventListener("click", async () => {
-      try {
-        if (!window.solana || !window.solana.isPhantom) {
-          alert("Phantom Wallet not found. Please install it to continue.");
-          return;
-        }
+      connectButton.addEventListener("click", async () => {
+        try {
+          if (!window.solana || !window.solana.isPhantom) {
+            alert("Phantom Wallet not found. Please install it to continue.");
+            return;
+          }
 
-        const resp = await window.solana.connect();
-        const walletAddress = resp.publicKey.toString();
-        status.innerText = `✅ Wallet connected: ${walletAddress}`;
+          const response = await window.solana.connect();
+          const walletAddress = response.publicKey.toString();
+          status.textContent = `✅ Wallet connected: ${walletAddress}`;
 
-        const params = new URLSearchParams(window.location.search);
-        const tgId = params.get("tg");
+          const params = new URLSearchParams(window.location.search);
+          const tgId = params.get("tg");
 
-        await fetch("/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ wallet: walletAddress, tg: tgId }),
-        })
-          .then(async (res) => {
-            const data = await res.json();
-            if (res.ok) {
-              status.textContent = "✅ Wallet verified!";
-            } else {
-              status.textContent = "❌ " + (data.message || "Verification failed.");
-            }
-          })
-          .catch((err) => {
-            console.error("Client error during verification:", err);
-            status.textContent = "❌ Error during verification.";
+          if (!tgId) {
+            status.textContent = "❌ Missing Telegram ID.";
+            return;
+          }
+
+          const verifyRes = await fetch("/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ wallet: walletAddress, tg: tgId }),
           });
-      } catch (err) {
-        console.error("Connection error:", err);
-        status.textContent = "❌ Failed to connect wallet.";
-      }
+
+          const data = await verifyRes.json();
+
+          if (verifyRes.ok) {
+            status.textContent = "✅ Wallet verified!";
+          } else {
+            status.textContent = "❌ " + (data.message || "Verification failed.");
+          }
+
+        } catch (err) {
+          console.error("Error during wallet verification:", err);
+          status.textContent = "❌ Error during verification.";
+        }
+      });
     });
-  });
-</script>
+  </script>
 </body>
 </html>
+
