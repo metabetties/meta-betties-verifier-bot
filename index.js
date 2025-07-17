@@ -40,24 +40,14 @@ app.post("/verify", async (req, res) => {
 
   try {
     const url = `https://api.helius.xyz/v0/addresses/${wallet}/nft-assets?api-key=${HELIUS_API_KEY}`;
-const response = await fetch(`https://api.helius.xyz/?api-key=${HELIUS_API_KEY}`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    jsonrpc: '2.0',
-    id: '1',
-    method: 'getAssetsByOwner',
-    params: { owner: wallet }
-  })
-});
-const data = await response.json();
-const nfts = data.result || [];
+    const response = await fetch(url);
+    const nfts = await response.json();
 
-const verified = nfts.some(nft =>
-  nft.creators?.some(c =>
-    c.address === VERIFIED_CREATOR && c.verified
-  )
-);
+    const verified = Array.isArray(nfts) && nfts.some((nft) =>
+      nft.creators?.some((creator) =>
+        creator.address === VERIFIED_CREATOR && creator.verified === true
+      )
+    );
 
     if (verified) {
       await bot.telegram.sendMessage(tg, "✅ Wallet verification successful!");
