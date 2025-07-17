@@ -10,44 +10,48 @@
   <button id="connect-button">Connect Wallet</button>
   <p id="status"></p>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const connectButton = document.getElementById("connect-button");
-      const status = document.getElementById("status");
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const connectButton = document.getElementById("connect-button");
+    const status = document.getElementById("status");
 
-      connectButton.addEventListener("click", async () => {
-        try {
-          if (!window.solana || !window.solana.isPhantom) {
-            alert("Phantom Wallet not found. Please install it to continue.");
-            return;
-          }
-
-          const resp = await window.solana.connect();
-          const walletAddress = resp.publicKey.toString();
-          status.innerText = `✅ Wallet connected: ${walletAddress}`;
-
-          const params = new URLSearchParams(window.location.search);
-          const tgId = params.get("tg");
-
-          const response = await fetch("/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ wallet: walletAddress, tg: tgId })
-          });
-
-          const data = await response.json();
-          if (data.success) {
-            status.innerText += "\n✅ Verification successful!";
-            window.location.href = `https://t.me/${data.groupUsername || "MetaBettiesVIP"}`;
-          } else {
-            status.innerText += "\n❌ Verification failed: " + (data.message || "");
-          }
-        } catch (err) {
-          console.error(err);
-          status.innerText = "❌ Error during verification.";
+    connectButton.addEventListener("click", async () => {
+      try {
+        if (!window.solana || !window.solana.isPhantom) {
+          alert("Phantom Wallet not found. Please install it to continue.");
+          return;
         }
-      });
+
+        const resp = await window.solana.connect();
+        const walletAddress = resp.publicKey.toString();
+        status.innerText = `✅ Wallet connected: ${walletAddress}`;
+
+        const params = new URLSearchParams(window.location.search);
+        const tgId = params.get("tg");
+
+        await fetch("/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: walletAddress, tg: tgId }),
+        })
+          .then(async (res) => {
+            const data = await res.json();
+            if (res.ok) {
+              status.textContent = "✅ Wallet verified!";
+            } else {
+              status.textContent = "❌ " + (data.message || "Verification failed.");
+            }
+          })
+          .catch((err) => {
+            console.error("Client error during verification:", err);
+            status.textContent = "❌ Error during verification.";
+          });
+      } catch (err) {
+        console.error("Connection error:", err);
+        status.textContent = "❌ Failed to connect wallet.";
+      }
     });
-  </script>
+  });
+</script>
 </body>
 </html>
