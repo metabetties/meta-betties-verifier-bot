@@ -43,7 +43,7 @@ app.post("/verify", async (req, res) => {
     console.log("🔍 Verifying wallet:", wallet);
 
     const response = await fetch(
-  `https://api.helius.xyz/v1/addresses/${wallet}/nfts?api-key=${HELIUS_API_KEY}`
+  `https://api.helius.xyz/v0/addresses/${wallet}/assets?api-key=${HELIUS_API_KEY}`
 );
 const data = await response.json();
 
