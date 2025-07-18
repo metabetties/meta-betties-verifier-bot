@@ -24,17 +24,30 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Telegram start command
+// Telegram start command (optional legacy fallback)
 bot.start((ctx) => {
   const userId = ctx.from.id;
   const url = `https://verify.metabetties.com/?tg=${userId}`;
   ctx.reply(`Please verify your wallet here: ${url}`);
 });
 
-// POST /verify
+// NEW: Handle join requests from invite link
+bot.on("chat_join_request", async (ctx) => {
+  const userId = ctx.chatJoinRequest.from.id;
+  const chatId = ctx.chatJoinRequest.chat.id;
+
+  const verifyUrl = `https://verify.metabetties.com/?tg=${userId}&chatId=${chatId}`;
+  try {
+    await ctx.telegram.sendMessage(userId, `🛂 Please verify your wallet to join Meta Betties:\n\n${verifyUrl}`);
+  } catch (err) {
+    console.error("Failed to send verification link:", err);
+  }
+});
+
+// POST /verify route
 app.post("/verify", async (req, res) => {
-  const { wallet, tg } = req.body;
-  if (!wallet || !tg) return res.status(400).send("Missing wallet or Telegram ID.");
+  const { wallet, tg, chatId } = req.body;
+  if (!wallet || !tg || !chatId) return res.status(400).send("Missing wallet, Telegram ID, or Chat ID.");
 
   try {
     const response = await fetch(`https://rpc.helius.xyz/?api-key=${HELIUS_API_KEY}`, {
@@ -63,7 +76,8 @@ app.post("/verify", async (req, res) => {
 
     if (verified) {
       await bot.telegram.sendMessage(tg, "✅ Wallet verification successful!");
-      return res.send({ success: true, groupLink: "https://t.me/+sOUpiDSRE2lhNWQx" });
+      await bot.telegram.approveChatJoinRequest(chatId, parseInt(tg));
+      return res.send({ success: true });
     } else {
       return res.status(403).send({ success: false, message: "No valid NFT found." });
     }
@@ -87,3 +101,4 @@ app.listen(PORT, async () => {
     console.error("Webhook setup failed:", err);
   }
 });
+

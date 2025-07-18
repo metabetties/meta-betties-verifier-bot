@@ -1,10 +1,13 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const connectBtn = document.getElementById("connectBtn");
   const statusText = document.getElementById("statusText");
-  const tg = new URLSearchParams(window.location.search).get("tg");
 
-  if (!tg) {
-    statusText.innerHTML = "❌ Missing Telegram ID.";
+  const params = new URLSearchParams(window.location.search);
+  const tg = params.get("tg");
+  const chatId = params.get("chatId");
+
+  if (!tg || !chatId) {
+    statusText.innerHTML = "❌ Missing Telegram or Chat ID.";
     connectBtn.disabled = true;
     return;
   }
@@ -24,16 +27,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       const verifyResp = await fetch("/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet, tg })
+        body: JSON.stringify({ wallet, tg, chatId })
       });
 
       const data = await verifyResp.json();
 
       if (verifyResp.ok && data.success) {
-        statusText.innerHTML = "✅ Wallet verified! Redirecting to Telegram…";
-        setTimeout(() => {
-          window.location.href = data.groupLink;
-        }, 2000);
+        statusText.innerHTML = "✅ Wallet verified! Your Telegram access will unlock shortly.";
       } else {
         statusText.innerHTML = `❌ ${data.message || "Verification failed."}`;
       }
