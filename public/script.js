@@ -1,3 +1,5 @@
+
+console.log("tg param is:", tg);
 document.addEventListener("DOMContentLoaded", async () => {
   const connectBtn = document.getElementById("connectBtn");
   const statusText = document.getElementById("statusText");
